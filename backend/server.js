@@ -14,16 +14,14 @@ const app = express();
 
 // Allow requests from the Vercel frontend and local dev.
 // In production CLIENT_URL=https://watchrbynhloso.vercel.app (set in Render dashboard).
-const allowedOrigins = [
-  'https://watchrbynhloso.vercel.app',
-  'http://localhost:5173',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow server-to-server requests (no Origin header) and listed origins
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||                                              // server-to-server / Postman
+      origin === 'https://watchrbynhloso.vercel.app' ||      // production domain
+      origin === 'http://localhost:5173' ||                   // local dev
+      /^https:\/\/watchr.*\.vercel\.app$/.test(origin)       // any Vercel preview URL
+    ) {
       return callback(null, true);
     }
     callback(new Error(`CORS blocked: ${origin}`));
