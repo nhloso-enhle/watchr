@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const client = axios.create({ baseURL: '/api' });
+const API_URL = "https://watchr.onrender.com";
+const client = axios.create({ baseURL: API_URL });
 
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
