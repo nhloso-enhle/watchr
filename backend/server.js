@@ -13,7 +13,7 @@ await connectDB();
 const app = express();
 
 app.use(cors({
-  origin: "https://watchr-r9t3o1h7b-nhloso-khumalos-projects.vercel.app",
+  origin: "https://watchrbynhloso.vercel.app",
   credentials: true
 }));
 app.use(express.json());
