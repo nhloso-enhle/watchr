@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "https://watchr.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL;
 const client = axios.create({ baseURL: API_URL });
 
 client.interceptors.request.use((config) => {
