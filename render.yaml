@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: watchr-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://watchrbynhloso.vercel.app
+      - key: PORT
+        value: 10000
+      # Set these manually in the Render dashboard — never commit real values
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

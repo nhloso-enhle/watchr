@@ -12,21 +12,37 @@ await connectDB();
 
 const app = express();
 
+// Allow requests from the Vercel frontend and local dev.
+// In production CLIENT_URL=https://watchrbynhloso.vercel.app (set in Render dashboard).
+const allowedOrigins = [
+  'https://watchrbynhloso.vercel.app',
+  'http://localhost:5173',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow server-to-server requests (no Origin header) and listed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
 }));
+
 app.use(express.json());
 
-// Public — no auth required (carousel images for login/register pages)
+// Public — no auth needed (carousel images for login/register pages)
 app.use('/api/public', publicRoutes);
 
-// Protected API routes
+// Protected API
 app.use('/api/auth',            authRoutes);
 app.use('/api/watchlist',       watchlistRoutes);
 app.use('/api/titles',          titlesRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
 
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal server error' });

@@ -1,18 +1,19 @@
 # Dependencies
 node_modules/
-
-# Environment variables
-.env
-
-# Logs
-logs/
-*.log
-npm-debug.log*
+backend/node_modules/
 
 # Build output
 dist/
-build/
 
-# OS files
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.production
+backend/.env
+backend/.env.local
+backend/.env.production
+
+# Editor & OS
 .DS_Store
-Thumbs.db
+.vscode/
+*.log
