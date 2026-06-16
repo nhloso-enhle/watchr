@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Compass, ListVideo, Star, Sparkles, LogOut, Sun, Moon } from 'lucide-react';
-import Avatar from 'boring-avatars';
+import { Avatar } from 'boring-avatars';
 import { useAuth }  from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle, User, Lock, Save } from 'lucide-react';
-import Avatar from 'boring-avatars';
+import { Avatar } from 'boring-avatars';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 
