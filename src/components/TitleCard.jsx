@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Check, Heart } from 'lucide-react';
+import { Plus, Check, Heart, Film } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
 
 const TYPE_LABELS = {
@@ -7,21 +7,33 @@ const TYPE_LABELS = {
   tvMovie: 'TV Movie', short: 'Short', tvSpecial: 'Special',
 };
 
+const STATUS_OPTIONS = [
+  { value: 'want_to_watch', label: '⏱ Want to Watch' },
+  { value: 'watching',      label: '▶ Watching'       },
+  { value: 'completed',     label: '✓ Completed'       },
+];
+
+const STATUS_COLOR = {
+  want_to_watch: 'var(--text-3)',
+  watching:      '#3b82f6',
+  completed:     'var(--success)',
+};
+
 export default function TitleCard({ title, mode = 'explore', onTitleClick, animDelay = 0 }) {
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, updateItem, getItem } = useWatchlist();
   const [adding, setAdding] = useState(false);
 
-  const id            = title.id || title.titleId;
-  const primaryTitle  = title.primaryTitle;
-  const imageUrl      = title.primaryImage?.url;
-  const rating        = title.rating?.aggregateRating;
-  const year          = title.startYear;
-  const type          = title.type;
-  const genres        = title.genres || [];
-  const inWatchlist   = isInWatchlist(id);
-  const saved         = getItem(id);
-  const isFavourite   = saved?.isFavourite ?? false;
-  const currentStatus = saved?.status ?? 'want_to_watch';
+  const id           = title.id || title.titleId;
+  const primaryTitle = title.primaryTitle;
+  const imageUrl     = title.primaryImage?.url;
+  const rating       = title.rating?.aggregateRating;
+  const year         = title.startYear;
+  const type         = title.type;
+  const genres       = title.genres || [];
+  const inWatchlist  = isInWatchlist(id);
+  const saved        = getItem(id);
+  const isFavourite  = saved?.isFavourite ?? false;
+  const status       = saved?.status ?? 'want_to_watch';
 
   const handleAdd = async () => {
     if (inWatchlist || adding) return;
@@ -38,161 +50,160 @@ export default function TitleCard({ title, mode = 'explore', onTitleClick, animD
   };
 
   const handleRemove = async () => {
-    try { await removeFromWatchlist(id); } catch (err) { console.error(err); }
+    try { await removeFromWatchlist(id); } catch {}
   };
 
   const handleFavourite = async () => {
-    try { await updateItem(id, { isFavourite: !isFavourite }); } catch (err) { console.error(err); }
+    try { await updateItem(id, { isFavourite: !isFavourite }); } catch {}
   };
 
   const handleStatus = async (e) => {
     e.stopPropagation();
-    try { await updateItem(id, { status: e.target.value }); } catch (err) { console.error(err); }
+    try { await updateItem(id, { status: e.target.value }); } catch {}
   };
-
-  const statusDot = {
-    want_to_watch: 'var(--text-3)',
-    watching:      '#3b82f6',
-    completed:     'var(--success)',
-  };
-
-  const canClick = !!onTitleClick;
 
   return (
     <div
-      className="card flex flex-col anim-up overflow-hidden"
-      style={{ animationDelay: `${animDelay}ms` }}
+      className="card anim-up flex items-center gap-3 p-2.5"
+      style={{ animationDelay: `${animDelay}ms`, borderRadius: '12px' }}
     >
-      {/* Poster */}
-      <div className="relative overflow-hidden flex-shrink-0" style={{ aspectRatio: '2/3' }}>
+      {/* ── Poster thumbnail ── */}
+      <div
+        className="flex-shrink-0 rounded-lg overflow-hidden"
+        style={{ width: '52px', height: '78px', background: 'var(--bg-alt)' }}
+      >
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={primaryTitle}
-            className="w-full h-full object-cover"
-            style={{ transition: 'transform 0.35s ease' }}
-            onMouseEnter={e => { e.target.style.transform = 'scale(1.05)'; }}
-            onMouseLeave={e => { e.target.style.transform = 'scale(1)'; }}
-          />
+          <img src={imageUrl} alt={primaryTitle} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center px-4 text-center text-sm font-medium"
-            style={{ background: 'var(--bg-alt)', color: 'var(--text-3)' }}>
-            {primaryTitle}
-          </div>
-        )}
-
-        {/* Gradient overlay */}
-        <div
-          className="absolute inset-0 flex flex-col justify-end p-2.5"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }}
-        >
-          {rating && (
-            <span className="flex items-center gap-1 mb-1" style={{ fontSize: '0.75rem' }}>
-              <span style={{ color: 'var(--gold)' }}>★</span>
-              <span className="font-medium text-white">{rating.toFixed(1)}</span>
-            </span>
-          )}
-          {genres.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {genres.slice(0, 2).map(g => (
-                <span key={g} className="px-1.5 py-0.5 rounded text-white"
-                  style={{ background: 'rgba(37,99,235,0.55)', fontSize: '0.6rem', fontWeight: 500 }}>
-                  {g}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Type badge */}
-        {type && (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md"
-            style={{ background: 'rgba(0,0,0,0.72)', color: 'rgba(255,255,255,0.75)', fontSize: '0.6rem', backdropFilter: 'blur(4px)' }}>
-            {TYPE_LABELS[type] || type}
-          </div>
-        )}
-
-        {/* Favourite pip */}
-        {mode === 'watchlist' && isFavourite && (
-          <div className="absolute top-2 right-2">
-            <Heart size={13} fill="var(--gold)" style={{ color: 'var(--gold)' }} />
+          <div className="w-full h-full flex items-center justify-center">
+            <Film size={18} style={{ color: 'var(--text-3)' }} />
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="px-3 pt-2.5 pb-1 flex-1">
+      {/* ── Info ── */}
+      <div className="flex-1 min-w-0">
+        {/* Title */}
         <h3
-          className="font-medium leading-snug line-clamp-2 text-sm"
+          className="font-medium text-sm leading-snug line-clamp-2"
           style={{
             color: 'var(--text)',
-            cursor: canClick ? 'pointer' : 'default',
+            cursor: onTitleClick ? 'pointer' : 'default',
             transition: 'color 0.15s',
           }}
           onClick={() => onTitleClick?.(id)}
-          onMouseEnter={e => { if (canClick) e.target.style.color = 'var(--accent)'; }}
-          onMouseLeave={e => { if (canClick) e.target.style.color = 'var(--text)'; }}
+          onMouseEnter={e => { if (onTitleClick) e.target.style.color = 'var(--accent)'; }}
+          onMouseLeave={e => { if (onTitleClick) e.target.style.color = 'var(--text)'; }}
         >
           {primaryTitle}
         </h3>
-        <div className="flex items-center gap-2 mt-0.5">
-          <p className="text-xs" style={{ color: 'var(--text-3)' }}>{year || 'TBA'}</p>
+
+        {/* Meta row */}
+        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+          {year && <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>{year}</span>}
+          {type && (
+            <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>
+              {TYPE_LABELS[type] || type}
+            </span>
+          )}
+          {rating && (
+            <span className="flex items-center gap-0.5" style={{ fontSize: '0.72rem' }}>
+              <span style={{ color: 'var(--gold)' }}>★</span>
+              <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{rating.toFixed(1)}</span>
+            </span>
+          )}
           {mode === 'watchlist' && (
-            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ background: statusDot[currentStatus] }} />
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: STATUS_COLOR[status] }}
+            />
           )}
         </div>
+
+        {/* Genres */}
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {genres.slice(0, 2).map(g => (
+              <span
+                key={g}
+                style={{
+                  fontSize: '0.62rem',
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  background: 'var(--accent-sub)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent-bd)',
+                }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Actions */}
-      <div className="px-3 pb-3 pt-1">
+      {/* ── Actions ── */}
+      <div className="flex-shrink-0 flex items-center gap-1.5">
         {mode === 'explore' ? (
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="btn w-full text-xs py-1.5"
+            className="btn text-xs"
             style={{
+              padding: '6px 12px',
               background: inWatchlist ? 'var(--accent-sub)' : 'var(--accent)',
               color:      inWatchlist ? 'var(--accent)'     : 'var(--accent-fg)',
               border:     `1.5px solid ${inWatchlist ? 'var(--accent-bd)' : 'transparent'}`,
+              fontSize: '0.75rem',
             }}
           >
-            {inWatchlist ? <><Check size={11} /> Saved</> : adding ? 'Adding…' : <><Plus size={11} /> Add</>}
+            {inWatchlist ? <><Check size={11} /> Saved</> : adding ? '…' : <><Plus size={11} /> Add</>}
           </button>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1">
+            {/* Status dropdown */}
             <select
-              value={currentStatus}
+              value={status}
               onChange={handleStatus}
-              className="field text-xs py-1.5"
-              style={{ fontSize: '0.75rem' }}
+              className="field"
+              style={{
+                padding: '5px 7px',
+                fontSize: '0.72rem',
+                borderRadius: '8px',
+                width: 'auto',
+                maxWidth: '120px',
+              }}
             >
-              <option value="want_to_watch">⏱ Want to Watch</option>
-              <option value="watching">▶ Watching</option>
-              <option value="completed">✓ Completed</option>
+              {STATUS_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
-            <div className="flex gap-1.5">
-              <button
-                onClick={handleFavourite}
-                className="btn btn-ghost flex-1 text-xs py-1.5"
-                style={{
-                  color:       isFavourite ? 'var(--gold)'           : 'var(--text-2)',
-                  borderColor: isFavourite ? 'var(--gold)'           : 'var(--border)',
-                  background:  isFavourite ? 'rgba(217,119,6,0.07)' : 'transparent',
-                }}
-              >
-                <Heart size={11} fill={isFavourite ? 'var(--gold)' : 'none'} />
-                Fav
-              </button>
-              <button
-                onClick={handleRemove}
-                className="btn btn-ghost flex-1 text-xs py-1.5"
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.borderColor = 'var(--danger)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                Remove
-              </button>
-            </div>
+
+            {/* Fav */}
+            <button
+              onClick={handleFavourite}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
+              style={{
+                background:  isFavourite ? 'rgba(217,119,6,0.1)' : 'var(--bg-alt)',
+                color:       isFavourite ? 'var(--gold)' : 'var(--text-3)',
+                border:      `1px solid ${isFavourite ? 'rgba(217,119,6,0.35)' : 'var(--border)'}`,
+              }}
+              title="Favourite"
+            >
+              <Heart size={12} fill={isFavourite ? 'var(--gold)' : 'none'} />
+            </button>
+
+            {/* Remove */}
+            <button
+              onClick={handleRemove}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0 text-lg leading-none"
+              style={{ background: 'var(--bg-alt)', color: 'var(--text-3)', border: '1px solid var(--border)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.borderColor = 'var(--danger)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              title="Remove"
+            >
+              ×
+            </button>
           </div>
         )}
       </div>

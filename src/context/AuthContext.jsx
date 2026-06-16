@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token');
     if (!token) { setLoading(false); return; }
     client.get('/auth/me')
-      .then((res) => setUser(res.data))
-      .catch(() => { localStorage.removeItem('token'); })
+      .then(res => setUser(res.data))
+      .catch(() => localStorage.removeItem('token'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -36,8 +36,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Merge updated fields into local user state without re-login
+  const updateUser = (updatedFields) => {
+    setUser(prev => ({ ...prev, ...updatedFields }));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

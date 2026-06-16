@@ -6,7 +6,17 @@ import protect from '../middleware/auth.js';
 const router = express.Router();
 const makeToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-/* ── Register ─────────────────────────────────────────────────── */
+function userPayload(user) {
+  return {
+    _id:           user._id,
+    username:      user.username,
+    email:         user.email,
+    name:          user.name          || '',
+    avatarVariant: user.avatarVariant || 'beam',
+  };
+}
+
+/* ── Register ─────────────────────────────────────────────── */
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -17,38 +27,34 @@ router.post('/register', async (req, res) => {
       });
     }
     const user = await User.create({ username, email, password });
-    res.status(201).json({ _id: user._id, username: user.username, email: user.email, token: makeToken(user._id) });
+    res.status(201).json({ ...userPayload(user), token: makeToken(user._id) });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-/* ── Login — accepts email OR username via `identifier` field ─── */
+/* ── Login — accepts email OR username ────────────────────── */
 router.post('/login', async (req, res) => {
   try {
     const { identifier, password } = req.body;
     if (!identifier || !password) {
       return res.status(400).json({ message: 'Email/username and password are required.' });
     }
-
-    // Look up by email (case-insensitive) OR by username
     const user = await User.findOne({
       $or: [
         { email:    identifier.toLowerCase() },
         { username: identifier               },
       ],
     });
-
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-
-    res.json({ _id: user._id, username: user.username, email: user.email, token: makeToken(user._id) });
+    res.json({ ...userPayload(user), token: makeToken(user._id) });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-/* ── Me ───────────────────────────────────────────────────────── */
+/* ── Me ───────────────────────────────────────────────────── */
 router.get('/me', protect, (req, res) => res.json(req.user));
 
-/* ── Forgot password — generates 6-digit code ────────────────── */
+/* ── Forgot password ──────────────────────────────────────── */
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -59,8 +65,7 @@ router.post('/forgot-password', async (req, res) => {
     if (!user) return res.json({ message: GENERIC });
 
     const code   = String(Math.floor(100000 + Math.random() * 900000));
-    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min
-
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
     user.resetCode       = code;
     user.resetCodeExpiry = expiry;
     await user.save();
@@ -74,27 +79,24 @@ router.post('/forgot-password', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-/* ── Reset password ───────────────────────────────────────────── */
+/* ── Reset password ───────────────────────────────────────── */
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
     if (!email || !code || !newPassword) {
       return res.status(400).json({ message: 'Email, code, and new password are required.' });
     }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
     }
-
     const user = await User.findOne({ email }).select('+resetCode +resetCodeExpiry');
     if (!user || user.resetCode !== code || !user.resetCodeExpiry || user.resetCodeExpiry < new Date()) {
       return res.status(400).json({ message: 'Invalid or expired reset code.' });
     }
-
     user.password        = newPassword;
     user.resetCode       = undefined;
     user.resetCodeExpiry = undefined;
     await user.save();
-
     res.json({ message: 'Password reset successfully. You can now sign in.' });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

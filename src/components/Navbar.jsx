@@ -1,7 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Compass, ListVideo, Star, Sparkles, LogOut, Sun, Moon } from 'lucide-react';
-import { useAuth }     from '../context/AuthContext';
-import { useTheme }    from '../context/ThemeContext';
+import Avatar from 'boring-avatars';
+import { useAuth }  from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const NAV = [
   { to: '/watchlist',       label: 'Watchlist',   icon: ListVideo },
@@ -10,17 +11,38 @@ const NAV = [
   { to: '/recommendations', label: 'For You',     icon: Sparkles  },
 ];
 
+const AVATAR_COLORS = ['#2563eb', '#60a5fa', '#1d4ed8', '#3b82f6', '#93c5fd'];
+
+function NavItem({ to, label, icon: Icon }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap ${
+          isActive ? 'font-semibold' : 'hover:opacity-80'
+        }`
+      }
+      style={({ isActive }) => ({
+        color:      isActive ? 'var(--accent)' : 'var(--text-2)',
+        background: isActive ? 'var(--accent-sub)' : 'transparent',
+      })}
+    >
+      <Icon size={14} strokeWidth={2} />
+      <span>{label}</span>
+    </NavLink>
+  );
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => { logout(); navigate('/login'); };
-  const initials = user?.username?.slice(0, 2).toUpperCase() || '??';
 
   return (
     <nav
-      className="sticky top-0 z-50 flex items-center justify-between px-6 h-14"
+      className="sticky top-0 z-50"
       style={{
         background: 'var(--nav-bg)',
         borderBottom: '1px solid var(--border)',
@@ -28,78 +50,75 @@ export default function Navbar() {
         WebkitBackdropFilter: 'blur(14px)',
       }}
     >
-      {/* Brand */}
-      <NavLink
-        to="/watchlist"
-        className="font-bold select-none transition-opacity hover:opacity-70"
-        style={{ fontFamily: "'Roboto', sans-serif", color: 'var(--accent)', fontSize: '1.2rem', letterSpacing: '-0.01em' }}
-      >
-        watchr.
-      </NavLink>
+      {/* ── Primary row ── */}
+      <div className="flex items-center px-4 sm:px-6 h-14 gap-3">
 
-      {/* Nav links */}
-      <div className="flex items-center gap-0.5">
-        {NAV.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? 'font-semibold'
-                  : 'hover:opacity-80'
-              }`
-            }
-            style={({ isActive }) => ({
-              color: isActive ? 'var(--accent)' : 'var(--text-2)',
-              background: isActive ? 'var(--accent-sub)' : 'transparent',
-            })}
-          >
-            <Icon size={14} strokeWidth={2} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </div>
-
-      {/* Right side */}
-      <div className="flex items-center gap-2">
-        {/* Theme toggle */}
-        <button
-          onClick={toggle}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-          style={{ color: 'var(--text-2)', background: 'transparent' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-alt)'; e.currentTarget.style.color = 'var(--text)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-2)'; }}
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        {/* Brand */}
+        <Link
+          to="/watchlist"
+          className="font-bold select-none transition-opacity hover:opacity-70 flex-shrink-0"
+          style={{ fontFamily: 'Roboto, sans-serif', color: 'var(--accent)', fontSize: '1.2rem', letterSpacing: '-0.01em' }}
         >
-          {isDark ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
+          watchr.
+        </Link>
 
-        {/* Divider */}
-        <div className="w-px h-4" style={{ background: 'var(--border)' }} />
-
-        {/* User chip */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm hidden md:block" style={{ color: 'var(--text-2)' }}>{user?.username}</span>
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs select-none flex-shrink-0"
-            style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
-          >
-            {initials}
-          </div>
+        {/* Desktop nav — hidden on mobile */}
+        <div className="hidden md:flex items-center gap-0.5 mx-auto">
+          {NAV.map(item => <NavItem key={item.to} {...item} />)}
         </div>
 
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-          style={{ color: 'var(--text-3)', background: 'transparent' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-alt)'; e.currentTarget.style.color = 'var(--danger)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
-          title="Sign out"
-        >
-          <LogOut size={14} />
-        </button>
+        {/* Right controls — always visible */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+            style={{ color: 'var(--text-2)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-alt)'; e.currentTarget.style.color = 'var(--text)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-2)'; }}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-4" style={{ background: 'var(--border)' }} />
+
+          {/* Avatar — links to profile */}
+          <Link to="/profile" className="flex items-center gap-2 rounded-lg px-1 py-1 transition-all hover:opacity-80">
+            <span className="text-sm hidden sm:block" style={{ color: 'var(--text-2)' }}>
+              {user?.name || user?.username}
+            </span>
+            <div className="rounded-full overflow-hidden flex-shrink-0" style={{ width: 28, height: 28 }}>
+              <Avatar
+                size={28}
+                name={user?.username || 'user'}
+                variant={user?.avatarVariant || 'beam'}
+                colors={AVATAR_COLORS}
+              />
+            </div>
+          </Link>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+            style={{ color: 'var(--text-3)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-alt)'; e.currentTarget.style.color = 'var(--danger)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+            title="Sign out"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Mobile nav row — hidden on md+ ── */}
+      <div
+        className="flex md:hidden overflow-x-auto px-2 pb-1 gap-0.5"
+        style={{ borderTop: '1px solid var(--border)' }}
+      >
+        {NAV.map(item => <NavItem key={item.to} {...item} />)}
       </div>
     </nav>
   );

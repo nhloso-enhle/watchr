@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ListVideo, Play, Check, Heart, SortAsc, Compass } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
-import TitleCard from '../components/TitleCard';
-import TitleModal from '../components/TitleModal';
+import TitleCard   from '../components/TitleCard';
+import TitleModal  from '../components/TitleModal';
+import Pagination  from '../components/Pagination';
 
 const TABS = [
   { key: '',              label: 'All'           },
@@ -20,23 +21,27 @@ const SORTS = [
   { key: 'year',   label: 'Year'          },
 ];
 
-function SkeletonCard() {
+const PER_PAGE = 12;
+
+function SkeletonItem() {
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-      <div className="skeleton" style={{ aspectRatio: '2/3' }} />
-      <div className="p-3 space-y-2" style={{ background: 'var(--surface)' }}>
-        <div className="skeleton h-3 w-4/5" />
-        <div className="skeleton h-3 w-2/5" />
+    <div className="card flex items-center gap-3 p-2.5" style={{ borderRadius: '12px' }}>
+      <div className="skeleton flex-shrink-0 rounded-lg" style={{ width: 52, height: 78 }} />
+      <div className="flex-1 space-y-2">
+        <div className="skeleton h-3 w-3/5" />
+        <div className="skeleton h-2.5 w-2/5" />
       </div>
+      <div className="skeleton flex-shrink-0 rounded-lg h-7 w-24" />
     </div>
   );
 }
 
 export default function Watchlist() {
-  const { items, loading } = useWatchlist();
+  const { items, loading }    = useWatchlist();
   const [activeTab, setActiveTab] = useState('');
   const [sort, setSort]           = useState('added');
   const [modalId, setModalId]     = useState(null);
+  const [page, setPage]           = useState(1);
 
   const stats = useMemo(() => ({
     total:      items.length,
@@ -57,8 +62,20 @@ export default function Watchlist() {
     return list;
   }, [items, activeTab, sort]);
 
+  // Reset to page 1 when filter/sort changes
+  const handleTab = (key) => { setActiveTab(key); setPage(1); };
+  const handleSort = (key) => { setSort(key); setPage(1); };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const handlePage = (p) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen page px-6 py-8 max-w-7xl mx-auto" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen page px-4 sm:px-6 py-8 max-w-3xl mx-auto" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
@@ -69,51 +86,42 @@ export default function Watchlist() {
           </h1>
           <p className="text-sm" style={{ color: 'var(--text-3)' }}>
             {stats.total} title{stats.total !== 1 ? 's' : ''} saved
-            {stats.total > 0 && (
-              <span style={{ color: 'var(--accent)', marginLeft: '6px' }}>
-                · click a title name for details
-              </span>
-            )}
           </p>
         </div>
-
-        {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <SortAsc size={13} style={{ color: 'var(--text-3)' }} />
-            <select value={sort} onChange={e => setSort(e.target.value)}
+            <select value={sort} onChange={e => handleSort(e.target.value)}
               className="text-sm outline-none bg-transparent cursor-pointer"
               style={{ color: 'var(--text)', fontFamily: 'Roboto, sans-serif' }}>
               {SORTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
             </select>
           </div>
-
           <Link to="/explore">
             <button className="btn flex items-center gap-1.5 text-sm font-medium"
-              style={{ background: 'var(--accent)', color: 'var(--accent-fg)', border: 'none', paddingTop: '8px', paddingBottom: '8px' }}>
-              <Compass size={13} />
-              Find more titles
+              style={{ background: 'var(--accent)', color: 'var(--accent-fg)', border: 'none', padding: '8px 14px' }}>
+              <Compass size={13} /> Find more titles
             </button>
           </Link>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Total',      value: stats.total,      icon: ListVideo, color: 'var(--text-2)' },
           { label: 'Watching',   value: stats.watching,   icon: Play,      color: '#3b82f6'       },
           { label: 'Completed',  value: stats.completed,  icon: Check,     color: 'var(--success)'},
           { label: 'Favourites', value: stats.favourites, icon: Heart,     color: 'var(--gold)'   },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card flex items-center gap-3 p-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          <div key={label} className="card flex items-center gap-3 p-3">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: `color-mix(in srgb, ${color} 12%, transparent)`, color }}>
-              <Icon size={15} />
+              <Icon size={14} />
             </div>
             <div>
-              <p className="font-bold leading-none" style={{ color: 'var(--text)', fontSize: '1.35rem' }}>{value}</p>
+              <p className="font-bold leading-none" style={{ color: 'var(--text)', fontSize: '1.25rem' }}>{value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>{label}</p>
             </div>
           </div>
@@ -124,8 +132,8 @@ export default function Watchlist() {
       <div className="flex flex-wrap gap-1 mb-6 p-1 rounded-xl w-fit"
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         {TABS.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            className="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+          <button key={tab.key} onClick={() => handleTab(tab.key)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap"
             style={{
               background: activeTab === tab.key ? 'var(--accent)' : 'transparent',
               color:      activeTab === tab.key ? 'var(--accent-fg)' : 'var(--text-2)',
@@ -135,14 +143,14 @@ export default function Watchlist() {
         ))}
       </div>
 
-      {/* Loading skeletons */}
+      {/* Loading */}
       {loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonItem key={i} />)}
         </div>
       )}
 
-      {/* Empty state */}
+      {/* Empty */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center py-20 text-center">
           <ListVideo size={40} className="mb-3 opacity-20" style={{ color: 'var(--text-3)' }} />
@@ -160,22 +168,24 @@ export default function Watchlist() {
         </div>
       )}
 
-      {/* Grid */}
-      {!loading && filtered.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filtered.map((item, i) => (
-            <TitleCard
-              key={item.titleId}
-              title={{ ...item, id: item.titleId }}
-              mode="watchlist"
-              animDelay={i * 30}
-              onTitleClick={(id) => setModalId(id)}
-            />
-          ))}
-        </div>
+      {/* List */}
+      {!loading && paged.length > 0 && (
+        <>
+          <div className="flex flex-col gap-2">
+            {paged.map((item, i) => (
+              <TitleCard
+                key={item.titleId}
+                title={{ ...item, id: item.titleId }}
+                mode="watchlist"
+                animDelay={i * 20}
+                onTitleClick={id => setModalId(id)}
+              />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onPage={handlePage} />
+        </>
       )}
 
-      {/* Detail modal */}
       {modalId && <TitleModal titleId={modalId} onClose={() => setModalId(null)} />}
     </div>
   );
