@@ -48,5 +48,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
+// Health check — used by Render and uptime monitors
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🎬  watchr. API running on :${PORT}`));

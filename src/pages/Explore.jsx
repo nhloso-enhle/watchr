@@ -38,7 +38,13 @@ export default function Explore() {
     try {
       const { data } = await client.get('/titles/search', { params: { query: q, limit: 60 } });
       setResults(Array.isArray(data) ? data : []);
-    } catch { setResults([]); }
+    } catch {
+        if (err.response?.status === 502) {
+          setResults([]);
+          // Show a specific message for IMDb API failures
+          setSearched(true);
+        }
+  }
     finally { setLoading(false); }
   }, []);
 
