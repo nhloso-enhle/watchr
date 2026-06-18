@@ -5,7 +5,7 @@ import TitleCard from '../components/TitleCard';
 import TitleModal from '../components/TitleModal';
 import Pagination from '../components/Pagination';
 
-const PER_PAGE = 12;
+const PER_PAGE = 10;
 
 function SkeletonItem() {
   return (
@@ -30,27 +30,35 @@ export default function Explore() {
   const [page, setPage]         = useState(1);
   const debounce = useRef(null);
 
-  const doSearch = useCallback(async (q) => {
-    if (!q.trim()) { setResults([]); setSearched(false); return; }
-    setLoading(true);
-    setSearched(true);
-    setPage(1);
-    try {
-      const { data } = await client.get('/titles/search', { params: { query: q, limit: 60 } });
-      setResults(Array.isArray(data) ? data : []);
-    } catch {
-        if (err.response?.status === 502) {
-          setResults([]);
-          // Show a specific message for IMDb API failures
-          setSearched(true);
-        }
+const abortRef = useRef(null);
+
+const doSearch = useCallback(async (q) => {
+  if (!q.trim()) { setResults([]); setSearched(false); return; }
+
+  // Cancel any in-flight request
+  abortRef.current?.abort();
+  abortRef.current = new AbortController();
+
+  setLoading(true);
+  setSearched(true);
+  setPage(1);
+  try {
+    const { data } = await client.get('/titles/search', {
+      params: { query: q, limit: 60 },
+      signal: abortRef.current.signal,
+    });
+    setResults(Array.isArray(data) ? data : []);
+  } catch (err) {
+    if (err.name === 'CanceledError') return; // ignore aborted requests
+    setResults([]);
+  } finally {
+    setLoading(false);
   }
-    finally { setLoading(false); }
-  }, []);
+}, []);
 
   useEffect(() => {
     clearTimeout(debounce.current);
-    debounce.current = setTimeout(() => doSearch(query), 400);
+    debounce.current = setTimeout(() => doSearch(query), 700);
     return () => clearTimeout(debounce.current);
   }, [query, doSearch]);
 

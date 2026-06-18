@@ -21,7 +21,7 @@ const SORTS = [
   { key: 'year',   label: 'Year'          },
 ];
 
-const PER_PAGE = 12;
+const PER_PAGE = 6;
 
 function SkeletonItem() {
   return (
