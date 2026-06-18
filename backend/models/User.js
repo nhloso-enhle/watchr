@@ -2,14 +2,14 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  username:      { type: String, required: true, unique: true, trim: true, minlength: 3 },
-  email:         { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password:      { type: String, required: true, minlength: 6 },
-  name:          { type: String, trim: true, default: '' },
-  avatarVariant: {
+  username: { type: String, required: true, unique: true, trim: true, minlength: 3 },
+  email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true, minlength: 6 },
+  name:     { type: String, trim: true, default: '' },
+  avatarStyle: {
     type: String,
-    enum: ['beam', 'marble', 'pixel', 'sunset', 'ring', 'bauhaus'],
-    default: 'beam',
+    enum: ['adventurer', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'notionists', 'open-peeps', 'pixel-art'],
+    default: 'bottts',
   },
   resetCode:       { type: String, select: false },
   resetCodeExpiry: { type: Date,   select: false },

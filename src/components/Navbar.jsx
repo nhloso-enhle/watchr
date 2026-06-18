@@ -1,17 +1,15 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Compass, ListVideo, Star, Sparkles, LogOut, Sun, Moon } from 'lucide-react';
-import Avatar from 'boring-avatars';
+import DiceBearAvatar from './DiceBearAvatar';
 import { useAuth }  from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const NAV = [
-  { to: '/watchlist',       label: 'Watchlist',   icon: ListVideo },
-  { to: '/explore',         label: 'Explore',     icon: Compass   },
-  { to: '/spotlight',       label: 'Spotlight',   icon: Star      },
-  { to: '/recommendations', label: 'For You',     icon: Sparkles  },
+  { to: '/watchlist',       label: 'Watchlist', icon: ListVideo },
+  { to: '/explore',         label: 'Explore',   icon: Compass   },
+  { to: '/spotlight',       label: 'Spotlight', icon: Star      },
+  { to: '/recommendations', label: 'For You',   icon: Sparkles  },
 ];
-
-const AVATAR_COLORS = ['#2563eb', '#60a5fa', '#1d4ed8', '#3b82f6', '#93c5fd'];
 
 function NavItem({ to, label, icon: Icon }) {
   return (
@@ -62,12 +60,12 @@ export default function Navbar() {
           watchr.
         </Link>
 
-        {/* Desktop nav — hidden on mobile */}
+        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-0.5 mx-auto">
           {NAV.map(item => <NavItem key={item.to} {...item} />)}
         </div>
 
-        {/* Right controls — always visible */}
+        {/* Right controls */}
         <div className="ml-auto flex items-center gap-2">
           {/* Theme toggle */}
           <button
@@ -84,19 +82,19 @@ export default function Navbar() {
           {/* Divider */}
           <div className="w-px h-4" style={{ background: 'var(--border)' }} />
 
-          {/* Avatar — links to profile */}
-          <Link to="/profile" className="flex items-center gap-2 rounded-lg px-1 py-1 transition-all hover:opacity-80">
+          {/* Avatar → profile */}
+          <Link
+            to="/profile"
+            className="flex items-center gap-2 rounded-lg px-1 py-1 transition-all hover:opacity-80"
+          >
             <span className="text-sm hidden sm:block" style={{ color: 'var(--text-2)' }}>
               {user?.name || user?.username}
             </span>
-            <div className="rounded-full overflow-hidden flex-shrink-0" style={{ width: 28, height: 28 }}>
-              <Avatar
-                size={28}
-                name={user?.username || 'user'}
-                variant={user?.avatarVariant || 'beam'}
-                colors={AVATAR_COLORS}
-              />
-            </div>
+            <DiceBearAvatar
+              seed={user?.username || 'user'}
+              style={user?.avatarStyle || 'bottts'}
+              size={28}
+            />
           </Link>
 
           {/* Logout */}
@@ -113,7 +111,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile nav row — hidden on md+ ── */}
+      {/* ── Mobile nav row ── */}
       <div
         className="flex md:hidden overflow-x-auto px-2 pb-1 gap-0.5"
         style={{ borderTop: '1px solid var(--border)' }}
