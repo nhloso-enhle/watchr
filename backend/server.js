@@ -14,33 +14,22 @@ await connectDB();
 
 const app = express();
 
-const isProd = process.env.NODE_ENV === 'production';
-
 app.use(cors({
   origin: (origin, callback) => {
-    if (
-      !origin ||
-      origin === 'https://watchrbynhloso.vercel.app' ||
-      origin === 'http://localhost:5173' ||
-      /^https:\/\/watchr.*\.vercel\.app$/.test(origin)
-    ) {
+    if (!origin || origin === 'https://watchrbynhloso.vercel.app' || origin === 'http://localhost:5173' || /^https:\/\/watchr.*\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
     callback(new Error(`CORS blocked: ${origin}`));
   },
-  credentials: true,   // Required for cookies to be sent cross-origin
+  credentials: true,
 }));
 
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// Health check — used by UptimeRobot to keep Render warm
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
-// Public
-app.use('/api/public',  publicRoutes);
-
-// Protected
+app.use('/api/public',          publicRoutes);
 app.use('/api/auth',            authRoutes);
 app.use('/api/watchlist',       watchlistRoutes);
 app.use('/api/titles',          titlesRoutes);

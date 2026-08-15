@@ -1,8 +1,7 @@
 import Navbar from './Navbar';
-
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0d' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
       {children}
     </div>

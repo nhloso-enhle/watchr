@@ -6,89 +6,20 @@ function daysSince(date) {
   return Math.floor((Date.now() - new Date(date)) / 86_400_000);
 }
 
-function ReleasedCard({ item }) {
-  const days = daysSince(item.releasedAt);
-  const label = days === 0 ? 'Today!' : days === 1 ? 'Yesterday' : `${days}d ago`;
-
-  return (
-    <div className="rounded-2xl overflow-hidden flex"
-      style={{ background: '#111116', border: '1px solid #252530' }}>
-
-      {/* Red left strip */}
-      <div className="w-1 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #e8153a, #b01029)' }} />
-
-      {/* Poster */}
-      <div className="w-28 flex-shrink-0 overflow-hidden" style={{ minHeight: '160px' }}>
-        {item.primaryImage?.url ? (
-          <img src={item.primaryImage.url} alt={item.primaryTitle}
-            className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"
-            style={{ background: '#18181f', color: '#8a8aa8' }}>
-            <Star size={20} />
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 p-5 flex flex-col justify-between">
-        <div>
-          <span className="inline-block text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded mb-2"
-            style={{ background: 'rgba(232,21,58,0.15)', color: '#e8153a' }}>
-            {label}
-          </span>
-          <h3 className="font-bold leading-tight"
-            style={{ fontFamily: "'Playfair Display', serif", color: '#f2f2f7', fontSize: '1.05rem' }}>
-            {item.primaryTitle}
-          </h3>
-          <p className="mt-0.5 text-xs" style={{ color: '#8a8aa8' }}>
-            {item.startYear}{item.type ? ` · ${item.type}` : ''}
-          </p>
-          {item.rating?.aggregateRating && (
-            <p className="mt-2 flex items-center gap-1 text-sm">
-              <span style={{ color: '#f5c518' }}>★</span>
-              <span className="font-semibold" style={{ color: '#f2f2f7' }}>
-                {item.rating.aggregateRating.toFixed(1)}
-              </span>
-              <span className="text-xs" style={{ color: '#8a8aa8' }}>
-                ({item.rating.voteCount?.toLocaleString()} votes)
-              </span>
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 mt-3">
-          <CalendarDays size={11} style={{ color: '#8a8aa8' }} />
-          <span className="text-xs" style={{ color: '#8a8aa8' }}>
-            Released {new Date(item.releasedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Spotlight() {
-  const [released, setReleased]   = useState([]);
-  const [upcoming, setUpcoming]   = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [released, setReleased] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
       try {
-        const [spotRes, allRes] = await Promise.all([
-          client.get('/watchlist/spotlight'),
-          client.get('/watchlist'),
-        ]);
-        setReleased(spotRes.data || []);
-        const currentYear = new Date().getFullYear();
-        setUpcoming((allRes.data || []).filter((i) => i.wasUpcoming && i.startYear > currentYear));
-      } catch {
-        setReleased([]);
-        setUpcoming([]);
-      } finally {
-        setLoading(false);
-      }
+        const [s, a] = await Promise.all([client.get('/watchlist/spotlight'), client.get('/watchlist')]);
+        setReleased(s.data || []);
+        const yr = new Date().getFullYear();
+        setUpcoming((a.data || []).filter(i => i.wasUpcoming && i.startYear > yr));
+      } catch { setReleased([]); setUpcoming([]); }
+      finally { setLoading(false); }
     }
     load();
   }, []);
@@ -96,113 +27,90 @@ export default function Spotlight() {
   const isEmpty = !loading && released.length === 0 && upcoming.length === 0;
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0d' }}>
-
+    <div className="min-h-screen page" style={{ background: 'var(--bg)' }}>
       {/* Header */}
-      <div className="relative py-14 px-6 text-center overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #111116 0%, #0a0a0d 100%)' }}>
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(245,197,24,0.08), transparent 60%)' }} />
-        <div className="relative">
-          <div className="flex justify-center items-center gap-2 mb-3">
-            <Star size={14} style={{ color: '#f5c518' }} fill="#f5c518" />
-            <span className="text-xs font-semibold tracking-widest uppercase"
-              style={{ color: '#f5c518' }}>Now Released</span>
-            <Star size={14} style={{ color: '#f5c518' }} fill="#f5c518" />
-          </div>
-          <h1 className="font-bold mb-2"
-            style={{ fontFamily: "'Playfair Display', serif", fontSize: '2.25rem', color: '#f2f2f7' }}>
-            Spotlight
-          </h1>
-          <p className="text-sm max-w-md mx-auto" style={{ color: '#8a8aa8' }}>
-            Upcoming titles you saved — now on the screen
-          </p>
+      <div className="py-12 px-6 text-center" style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex justify-center items-center gap-2 mb-2">
+          <Star size={13} fill="var(--gold)" style={{ color: 'var(--gold)' }} />
+          <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--gold)' }}>Now Released</span>
+          <Star size={13} fill="var(--gold)" style={{ color: 'var(--gold)' }} />
         </div>
+        <h1 className="font-bold mb-1.5" style={{ fontSize: '1.9rem', color: 'var(--text)', letterSpacing: '-0.02em' }}>Spotlight</h1>
+        <p className="text-sm" style={{ color: 'var(--text-2)' }}>Upcoming titles you saved — shown for 2 weeks after release</p>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+        {loading && <div className="flex justify-center py-24"><div className="w-8 h-8 rounded-full anim-spin" style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)' }} /></div>}
 
-        {/* Spinner */}
-        {loading && (
-          <div className="flex justify-center py-24">
-            <div className="w-8 h-8 rounded-full animate-spin"
-              style={{ border: '2px solid #252530', borderTopColor: '#f5c518' }} />
-          </div>
-        )}
-
-        {/* Released section */}
+        {/* Released */}
         {!loading && released.length > 0 && (
-          <section className="mb-14">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase"
-                style={{ background: '#e8153a', color: 'white' }}>
-                Just Released
-              </span>
-              <span className="text-sm" style={{ color: '#8a8aa8' }}>
-                Titles you saved before they dropped — showing for 2 weeks
-              </span>
+          <section className="mt-10 mb-12">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase" style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}>Just Released</span>
+              <span className="text-sm" style={{ color: 'var(--text-3)' }}>Showing for 2 weeks from release date</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {released.map((item) => <ReleasedCard key={item._id} item={item} />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {released.map((item, i) => {
+                const days  = daysSince(item.releasedAt);
+                const label = days === 0 ? 'Today!' : days === 1 ? 'Yesterday' : `${days}d ago`;
+                return (
+                  <div key={item._id} className="card flex overflow-hidden anim-up" style={{ animationDelay: `${i * 60}ms` }}>
+                    <div className="w-1 flex-shrink-0" style={{ background: 'var(--accent)' }} />
+                    <div className="w-24 flex-shrink-0 overflow-hidden" style={{ minHeight: '140px' }}>
+                      {item.primaryImage?.url
+                        ? <img src={item.primaryImage.url} alt={item.primaryTitle} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full" style={{ background: 'var(--bg-alt)' }} />}
+                    </div>
+                    <div className="flex-1 p-4 flex flex-col justify-between">
+                      <div>
+                        <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-md mb-1.5" style={{ background: 'var(--accent-sub)', color: 'var(--accent)' }}>{label}</span>
+                        <h3 className="font-semibold leading-snug mb-0.5" style={{ color: 'var(--text)', fontSize: '0.95rem' }}>{item.primaryTitle}</h3>
+                        <p className="text-xs" style={{ color: 'var(--text-3)' }}>{item.startYear}{item.type ? ` · ${item.type}` : ''}</p>
+                        {item.rating?.aggregateRating && <p className="mt-1.5 flex items-center gap-1 text-xs"><span style={{ color: 'var(--gold)' }}>★</span><span className="font-semibold" style={{ color: 'var(--text)' }}>{item.rating.aggregateRating.toFixed(1)}</span></p>}
+                      </div>
+                      <div className="flex items-center gap-1 mt-2">
+                        <CalendarDays size={10} style={{ color: 'var(--text-3)' }} />
+                        <span className="text-xs" style={{ color: 'var(--text-3)' }}>{new Date(item.releasedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* Still upcoming section */}
+        {/* Still upcoming */}
         {!loading && upcoming.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <Clock size={16} style={{ color: '#8a8aa8' }} />
-              <h2 className="font-semibold text-base" style={{ color: '#f2f2f7' }}>Still Waiting</h2>
-              <span className="text-sm" style={{ color: '#8a8aa8' }}>
-                · {upcoming.length} upcoming title{upcoming.length !== 1 ? 's' : ''} in your list
-              </span>
+          <section className={released.length > 0 ? '' : 'mt-10'}>
+            <div className="flex items-center gap-2 mb-5">
+              <Clock size={14} style={{ color: 'var(--text-3)' }} />
+              <h2 className="font-semibold text-sm" style={{ color: 'var(--text)' }}>Still Waiting</h2>
+              <span className="text-sm" style={{ color: 'var(--text-3)' }}>· {upcoming.length} upcoming title{upcoming.length !== 1 ? 's' : ''} in your list</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {upcoming.map((item) => (
-                <div key={item._id} className="rounded-xl overflow-hidden"
-                  style={{ background: '#111116', border: '1px solid #252530' }}>
+              {upcoming.map((item, i) => (
+                <div key={item._id} className="card overflow-hidden anim-up" style={{ animationDelay: `${i * 40}ms` }}>
                   <div className="relative" style={{ aspectRatio: '2/3' }}>
-                    {item.primaryImage?.url ? (
-                      <img src={item.primaryImage.url} alt={item.primaryTitle}
-                        className="w-full h-full object-cover"
-                        style={{ filter: 'brightness(0.55) saturate(0.7)' }} />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"
-                        style={{ background: '#18181f', color: '#8a8aa8' }}>
-                        <Clock size={22} />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-end p-2"
-                      style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded"
-                        style={{ background: 'rgba(10,10,13,0.85)', color: '#f5c518' }}>
-                        {item.startYear ?? 'TBA'}
-                      </span>
+                    {item.primaryImage?.url
+                      ? <img src={item.primaryImage.url} alt={item.primaryTitle} className="w-full h-full object-cover" style={{ filter: 'brightness(0.55) saturate(0.6)' }} />
+                      : <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--bg-alt)', color: 'var(--text-3)' }}><Clock size={20} /></div>}
+                    <div className="absolute bottom-1.5 left-1.5">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: 'var(--accent)', color: 'var(--accent-fg)', fontSize: '0.6rem' }}>{item.startYear ?? 'TBA'}</span>
                     </div>
                   </div>
-                  <div className="p-2">
-                    <p className="text-xs font-medium leading-tight line-clamp-2" style={{ color: '#f2f2f7' }}>
-                      {item.primaryTitle}
-                    </p>
-                  </div>
+                  <div className="p-2"><p className="text-xs font-medium leading-tight line-clamp-2" style={{ color: 'var(--text)' }}>{item.primaryTitle}</p></div>
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Empty state */}
         {isEmpty && (
           <div className="flex flex-col items-center text-center py-24">
-            <Sparkles size={48} className="mb-4 opacity-20" style={{ color: '#f5c518' }} />
-            <p className="text-xl font-semibold mb-2"
-              style={{ fontFamily: "'Playfair Display', serif", color: '#f2f2f7' }}>
-              Nothing in the Spotlight yet
-            </p>
-            <p className="text-sm max-w-sm" style={{ color: '#8a8aa8' }}>
-              Add upcoming titles to your watchlist and they'll appear here when they release
-            </p>
+            <Sparkles size={40} className="mb-3 opacity-15" style={{ color: 'var(--accent)' }} />
+            <p className="font-semibold text-lg mb-1.5" style={{ color: 'var(--text)' }}>Nothing in the Spotlight yet</p>
+            <p className="text-sm max-w-sm" style={{ color: 'var(--text-3)' }}>Add upcoming titles to your watchlist and they'll appear here when they release</p>
           </div>
         )}
       </div>

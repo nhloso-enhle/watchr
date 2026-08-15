@@ -3,17 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
+  "scripts": { "dev": "vite", "build": "vite build", "lint": "eslint .", "preview": "vite preview" },
   "dependencies": {
     "@fontsource/roboto": "^5.2.10",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
-    "boring-avatars": "^1.11.2",
     "gsap": "^3.12.5",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",

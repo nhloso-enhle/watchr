@@ -6,12 +6,10 @@ import protect from '../middleware/auth.js';
 
 const router = express.Router();
 const groq   = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-const TMDB = 'https://api.themoviedb.org/3';
-const IMG  = 'https://image.tmdb.org/t/p';
+const IMG    = 'https://image.tmdb.org/t/p';
 
 const tmdb = axios.create({
-  baseURL: TMDB,
+  baseURL: 'https://api.themoviedb.org/3',
   headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` },
   timeout: 8000,
 });
@@ -23,21 +21,17 @@ async function enrichWithTMDB(title, year) {
     });
     const hit = (data.results || []).find(r => r.media_type === 'movie' || r.media_type === 'tv');
     if (!hit) return null;
-
-    const isTV  = hit.media_type === 'tv';
     const poster = hit.poster_path ? `${IMG}/w500${hit.poster_path}` : null;
     return {
       id:           `${hit.media_type}-${hit.id}`,
       tmdbId:       hit.id,
       mediaType:    hit.media_type,
+      type:         hit.media_type === 'tv' ? 'tvSeries' : 'movie',
       primaryTitle: hit.title || hit.name,
       startYear:    parseInt((hit.release_date || hit.first_air_date || '').split('-')[0]) || year,
       primaryImage: poster ? { url: poster } : null,
-      rating: hit.vote_average ? {
-        aggregateRating: Math.round(hit.vote_average * 10) / 10,
-        voteCount: hit.vote_count,
-      } : null,
-      plot: hit.overview || '',
+      rating: hit.vote_average ? { aggregateRating: Math.round(hit.vote_average * 10) / 10, voteCount: hit.vote_count } : null,
+      plot:   hit.overview || '',
     };
   } catch { return null; }
 }
@@ -48,17 +42,13 @@ router.get('/', protect, async (req, res) => {
     if (watchlist.length === 0) return res.json({ recommendations: [], empty: true });
 
     const summary = watchlist.map(w => ({
-      title:       w.primaryTitle,
-      type:        w.type,
-      year:        w.startYear,
-      genres:      w.genres,
-      rating:      w.rating?.aggregateRating,
-      isFavourite: w.isFavourite,
-      status:      w.status,
+      title: w.primaryTitle, type: w.type, year: w.startYear,
+      genres: w.genres, rating: w.rating?.aggregateRating,
+      isFavourite: w.isFavourite, status: w.status,
     }));
 
     const completion = await groq.chat.completions.create({
-      model:      'llama-3.3-70b-versatile',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 600,
       temperature: 0.7,
       messages: [{
@@ -85,12 +75,8 @@ ${JSON.stringify(summary, null, 2)}`,
       return res.status(500).json({ message: 'Failed to parse AI response. Try again.' });
     }
 
-    // Enrich with TMDB data in parallel
     const enriched = await Promise.all(
-      recs.map(async rec => ({
-        ...rec,
-        imdbData: await enrichWithTMDB(rec.title, rec.year),
-      }))
+      recs.map(async rec => ({ ...rec, imdbData: await enrichWithTMDB(rec.title, rec.year) }))
     );
 
     res.json({ recommendations: enriched });

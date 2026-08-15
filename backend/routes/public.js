@@ -1,8 +1,8 @@
 import express from 'express';
 import axios from 'axios';
 
-const router  = express.Router();
-const IMG     = 'https://image.tmdb.org/t/p';
+const router = express.Router();
+const IMG    = 'https://image.tmdb.org/t/p';
 
 const tmdb = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
@@ -10,6 +10,7 @@ const tmdb = axios.create({
   timeout: 8000,
 });
 
+// No auth — used by login/register pages for the background carousel
 router.get('/carousel', async (req, res) => {
   try {
     const { data } = await tmdb.get('/trending/all/week', { params: { language: 'en-US' } });

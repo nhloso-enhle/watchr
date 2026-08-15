@@ -24,20 +24,15 @@ export default function App() {
         <WatchlistProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public */}
               <Route path="/login"           element={<Login />} />
               <Route path="/register"        element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-
-              {/* Protected */}
               <Route path="/watchlist"       element={<Guard><Watchlist /></Guard>} />
               <Route path="/explore"         element={<Guard><Explore /></Guard>} />
               <Route path="/spotlight"       element={<Guard><Spotlight /></Guard>} />
               <Route path="/recommendations" element={<Guard><Recommendations /></Guard>} />
               <Route path="/profile"         element={<Guard><Profile /></Guard>} />
-
-              {/* Default */}
-              <Route path="*" element={<Navigate to="/watchlist" replace />} />
+              <Route path="*"               element={<Navigate to="/watchlist" replace />} />
             </Routes>
           </BrowserRouter>
         </WatchlistProvider>
