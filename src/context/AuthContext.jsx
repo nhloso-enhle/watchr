@@ -11,29 +11,48 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('watchr_token');
+    if (!token) { setLoading(false); return; }
     client.get('/auth/me')
       .then(res => { setUser(res.data); localStorage.setItem('watchr-user', JSON.stringify(res.data)); })
-      .catch(() => { setUser(null); localStorage.removeItem('watchr-user'); })
+      .catch(() => {
+        localStorage.removeItem('watchr_token');
+        localStorage.removeItem('watchr-user');
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (identifier, password, stayLoggedIn = true) => {
     const { data } = await client.post('/auth/login', { identifier, password, stayLoggedIn });
-    setUser(data); localStorage.setItem('watchr-user', JSON.stringify(data)); return data;
+    // Token comes in response body now
+    localStorage.setItem('watchr_token', data.token);
+    localStorage.setItem('watchr-user', JSON.stringify(data));
+    setUser(data);
+    return data;
   };
 
   const register = async (username, email, password) => {
     const { data } = await client.post('/auth/register', { username, email, password });
-    setUser(data); localStorage.setItem('watchr-user', JSON.stringify(data)); return data;
+    localStorage.setItem('watchr_token', data.token);
+    localStorage.setItem('watchr-user', JSON.stringify(data));
+    setUser(data);
+    return data;
   };
 
   const logout = async () => {
     try { await client.post('/auth/logout'); } catch {}
-    setUser(null); localStorage.removeItem('watchr-user');
+    localStorage.removeItem('watchr_token');
+    localStorage.removeItem('watchr-user');
+    setUser(null);
   };
 
   const updateUser = (fields) => {
-    setUser(prev => { const next = { ...prev, ...fields }; localStorage.setItem('watchr-user', JSON.stringify(next)); return next; });
+    setUser(prev => {
+      const next = { ...prev, ...fields };
+      localStorage.setItem('watchr-user', JSON.stringify(next));
+      return next;
+    });
   };
 
   return (

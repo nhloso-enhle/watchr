@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import authRoutes            from './routes/auth.js';
 import watchlistRoutes       from './routes/watchlist.js';
@@ -16,7 +15,12 @@ const app = express();
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin === 'https://watchrbynhloso.vercel.app' || origin === 'http://localhost:5173' || /^https:\/\/watchr.*\.vercel\.app$/.test(origin)) {
+    if (
+      !origin ||
+      origin === 'https://watchrbynhloso.vercel.app' ||
+      origin === 'http://localhost:5173' ||
+      /^https:\/\/watchr.*\.vercel\.app$/.test(origin)
+    ) {
       return callback(null, true);
     }
     callback(new Error(`CORS blocked: ${origin}`));
@@ -25,7 +29,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
